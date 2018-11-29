@@ -1,9 +1,28 @@
-use stm32::{I2C1, RCC};
-
 use hal::blocking::i2c::{Read, Write, WriteRead};
+use stm32::{I2C1, I2C2, I2C3, RCC};
 
-use gpio::gpiob::{PB6, PB7, PB8, PB9};
+use gpio::gpioa::PA8;
+
+#[cfg(any(feature = "stm32f401", feature = "stm32f411", feature = "stm32f412"))]
+use gpio::gpiob::{PB10, PB11, PB3, PB4, PB6, PB7, PB8, PB9};
+
+#[cfg(any(feature = "stm32f407", feature = "stm32f429"))]
+use gpio::gpiob::{PB10, PB11, PB6, PB7, PB8, PB9};
+
+use gpio::gpioc::PC9;
+
+#[cfg(any(feature = "stm32f407", feature = "stm32f412", feature = "stm32f429"))]
+use gpio::gpiof::{PF0, PF1};
+
+#[cfg(any(feature = "stm32f407", feature = "stm32f429"))]
+use gpio::gpioh::{PH4, PH5, PH7, PH8};
+
+#[cfg(any(feature = "stm32f401", feature = "stm32f411", feature = "stm32f412"))]
+use gpio::{Alternate, AF4, AF9};
+
+#[cfg(any(feature = "stm32f407", feature = "stm32f429"))]
 use gpio::{Alternate, AF4};
+
 use rcc::Clocks;
 use time::{Hertz, KiloHertz, U32Ext};
 
@@ -14,9 +33,49 @@ pub struct I2c<I2C, PINS> {
 }
 
 pub trait Pins<I2c> {}
+pub trait PinScl<I2c> {}
+pub trait PinSda<I2c> {}
 
-impl Pins<I2C1> for (PB6<Alternate<AF4>>, PB7<Alternate<AF4>>) {}
-impl Pins<I2C1> for (PB8<Alternate<AF4>>, PB9<Alternate<AF4>>) {}
+impl<I2C, SCL, SDA> Pins<I2C> for (SCL, SDA)
+where
+    SCL: PinScl<I2C>,
+    SDA: PinSda<I2C>,
+{
+}
+
+impl PinScl<I2C1> for PB6<Alternate<AF4>> {}
+impl PinScl<I2C1> for PB8<Alternate<AF4>> {}
+
+impl PinSda<I2C1> for PB7<Alternate<AF4>> {}
+impl PinSda<I2C1> for PB9<Alternate<AF4>> {}
+
+impl PinScl<I2C2> for PB10<Alternate<AF4>> {}
+#[cfg(any(feature = "stm32f407", feature = "stm32f412", feature = "stm32f429"))]
+impl PinScl<I2C2> for PF1<Alternate<AF4>> {}
+#[cfg(any(feature = "stm32f407", feature = "stm32f429"))]
+impl PinScl<I2C2> for PH4<Alternate<AF4>> {}
+
+#[cfg(any(feature = "stm32f401", feature = "stm32f411", feature = "stm32f412"))]
+impl PinSda<I2C2> for PB3<Alternate<AF9>> {}
+#[cfg(any(feature = "stm32f411", feature = "stm32f412"))]
+impl PinSda<I2C2> for PB9<Alternate<AF9>> {}
+impl PinSda<I2C2> for PB11<Alternate<AF4>> {}
+#[cfg(any(feature = "stm32f407", feature = "stm32f412", feature = "stm32f429"))]
+impl PinSda<I2C2> for PF0<Alternate<AF4>> {}
+#[cfg(any(feature = "stm32f407", feature = "stm32f429"))]
+impl PinSda<I2C2> for PH5<Alternate<AF4>> {}
+
+impl PinScl<I2C3> for PA8<Alternate<AF4>> {}
+#[cfg(any(feature = "stm32f407", feature = "stm32f429"))]
+impl PinScl<I2C3> for PH7<Alternate<AF4>> {}
+
+#[cfg(any(feature = "stm32f401", feature = "stm32f411", feature = "stm32f412"))]
+impl PinSda<I2C3> for PB4<Alternate<AF9>> {}
+#[cfg(any(feature = "stm32f411", feature = "stm32f412"))]
+impl PinSda<I2C3> for PB8<Alternate<AF9>> {}
+impl PinSda<I2C3> for PC9<Alternate<AF4>> {}
+#[cfg(any(feature = "stm32f407", feature = "stm32f429"))]
+impl PinSda<I2C3> for PH8<Alternate<AF4>> {}
 
 #[derive(Debug)]
 pub enum Error {
